@@ -1,0 +1,36 @@
+<div class="container">
+  <h1>Bejelentkezés</h1>
+  {{#if error}}
+    <div class="alert alert-danger" role="alert">
+      {{error}}
+    </div>
+  {{/if}}
+
+  <form method="post">
+    <div class="mb-3">
+      <label for="username">Felhasználónév:</label>
+      <input
+        type="text"
+        id="username"
+        name="felhasznalonev"
+        class="form-control"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label for="password">Jelszó:</label>
+      <input
+        type="password"
+        id="password"
+        name="jelszo"
+        class="form-control"
+        required
+      />
+    </div>
+    <button class="btn btn-primary" type="submit">Bejelentkezés</button>
+  </form>
+  <div class="registration-link">
+    <label>Ha még nem regisztráltál,
+      <a href="/regisztracio">Kattints ide</a>!</label>
+  </div>
+</div>

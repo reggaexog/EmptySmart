@@ -1,0 +1,52 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["rhel-openssl-1.0.x", "windows"]
+}
+
+model Kukas {
+  id             Int           @id @default(autoincrement())
+  felhasznalonev String?
+  jelszo         String?
+  kiurtes_szam   Int?
+  kukauritesek   KukaUritesek? @relation(name: "KukasToKukaUritesek")
+}
+
+model Kuka {
+  id               Int           @id @default(autoincrement())
+  allapot          Int?
+  legutobbi_urites DateTime?
+  location_x       String?
+  location_y       String?
+  jelzesek         Jelzesek?     @relation(name: "KukaToJelzesek")
+  kukauritesek     KukaUritesek? @relation(name: "KukaToKukaUritesek")
+}
+
+model Felhasznalo {
+  id             Int       @id @default(autoincrement())
+  felhasznalonev String?   @unique
+  jelszo         String?
+  jelzesek       Jelzesek? @relation(name: "FelhasznaloToJelzesek")
+}
+
+model Jelzesek {
+  id            Int          @id @default(autoincrement())
+  kuka          Kuka?        @relation(name: "KukaToJelzesek", fields: [kukaId], references: [id])
+  kukaId        Int?         @unique
+  jelzes_datum  DateTime?
+  felhasznalo   Felhasznalo? @relation(name: "FelhasznaloToJelzesek", fields: [felhasznaloId], references: [id])
+  felhasznaloId Int?         @unique
+}
+
+model KukaUritesek {
+  id             Int       @id @default(autoincrement())
+  kukas          Kukas?    @relation(name: "KukasToKukaUritesek", fields: [kukasId], references: [id])
+  kukasId        Int?      @unique
+  kuka           Kuka?     @relation(name: "KukaToKukaUritesek", fields: [kukaId], references: [id])
+  kukaId         Int?      @unique
+  kiurites_datum DateTime?
+}
