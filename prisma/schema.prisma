@@ -10,7 +10,7 @@ generator client {
 
 model Kukas {
   id             Int           @id @default(autoincrement())
-  felhasznalonev String?
+  felhasznalonev String?       @unique
   jelszo         String?
   kiurtes_szam   Int?
   kukauritesek   KukaUritesek? @relation(name: "KukasToKukaUritesek")

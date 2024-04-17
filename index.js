@@ -25,10 +25,16 @@ app.get("/", (req, res) => {
 
 //BEJELENTKEZÉS
 app.get("/bejelentkezes", (req, res) => {
+  if (req.session.userId) {
+    return res.redirect("/map");
+  }
   res.render("bejelentkezes");
 });
 
 app.post("/bejelentkezes", async (req, res) => {
+  if (req.session.userId) {
+    return res.redirect("/map");
+  }
   const { felhasznalonev, jelszo } = req.body;
   const user = await db.felhasznalo.findUnique({
     where: {
@@ -46,10 +52,16 @@ app.post("/bejelentkezes", async (req, res) => {
 
 //REGISZTRÁCIÓ
 app.get("/regisztracio", (req, res) => {
+  if (req.session.userId) {
+    return res.redirect("/map");
+  }
   res.render("regisztracio");
 });
 
 app.post("/regisztracio", async (req, res) => {
+  if (req.session.userId) {
+    return res.redirect("/map");
+  }
   const { felhasznalonev, jelszo, jelszo_ismet } = req.body;
   if (jelszo !== jelszo_ismet) {
     return res.render("regisztracio", {
@@ -81,27 +93,42 @@ app.post("/regisztracio", async (req, res) => {
 
 //ADMIN BEJELENTKEZÉS
 app.post("/adminbejelentkezes", async (req, res) => {
+  if (req.session.adminId) {
+    return res.redirect("/adminmap");
+  }
   const { felhasznalonev, jelszo } = req.body;
-  const admin = await db.admin.findUnique({
+  const admin = await db.kukas.findUnique({
     where: {
       felhasznalonev,
     },
   });
   if (!admin || admin.jelszo !== jelszo) {
-    return res.status(401).send("Hibás felhasználónév vagy jelszó!");
+    return res.render("adminbejelentkezes", {
+      error: "Hibás felhasználónév vagy jelszó!",
+    });
   }
+  req.session.adminId = admin.id;
   res.redirect("/adminmap");
 });
 
 app.get("/adminbejelentkezes", (req, res) => {
+  if (req.session.adminId) {
+    return res.redirect("/adminmap");
+  }
   res.render("adminbejelentkezes");
 });
 
 app.get("/adminmap", (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   res.render("adminmap");
 });
 
 app.get("/kuka/:id/urites", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { id } = req.params;
   const kuka = await db.kuka.findUnique({
     where: {
@@ -112,6 +139,9 @@ app.get("/kuka/:id/urites", async (req, res) => {
 });
 
 app.post("/kuka/:id/urites", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { id } = req.params;
   const kuka = await db.kuka.findUnique({
     where: {
@@ -131,6 +161,9 @@ app.post("/kuka/:id/urites", async (req, res) => {
 });
 
 app.get("/kuka/:id/szerkesztes", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { id } = req.params;
   const kuka = await db.kuka.findUnique({
     where: {
@@ -141,6 +174,9 @@ app.get("/kuka/:id/szerkesztes", async (req, res) => {
 });
 
 app.post("/kuka/:id/szerkesztes", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { id } = req.params;
   const { location_x, location_y } = req.body;
   await db.kuka.update({
@@ -156,6 +192,9 @@ app.post("/kuka/:id/szerkesztes", async (req, res) => {
 });
 
 app.get("/kuka/:id/torles", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { id } = req.params;
   await db.kuka.delete({
     where: {
@@ -166,6 +205,9 @@ app.get("/kuka/:id/torles", async (req, res) => {
 });
 
 app.post("/uj-kuka", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.redirect("/adminbejelentkezes");
+  }
   const { location_x, location_y } = req.body;
   const newKuka = await db.kuka.create({
     data: {
@@ -182,6 +224,12 @@ app.get("/map", async (req, res) => {
   const kukak = await db.kuka.findMany();
   res.render("map", { kukak });
 });
+app.get("/kilepes", (req, res) => {
+  req.session.userId = null;
+  req.session.adminId = null;
+  res.redirect("/");
+});
+
 
 app.listen(port, () => {
   console.log("A szerver elindult.");
