@@ -5,8 +5,18 @@ const session = require("express-session");
 
 const app = express();
 const port = process.env.PORT || 3000;
-app.engine("handlebars", engine());
-app.set("view engine", "handlebars");
+app.engine(
+  ".hbs",
+  engine({
+    extname: ".hbs",
+    helpers: {
+      json: function (context) {
+        return JSON.stringify(context);
+      },
+    },
+  })
+);
+app.set("view engine", ".hbs");
 app.set("views", "./views");
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -16,7 +26,8 @@ app.use(
     saveUninitialized: false, // don't create session until something stored
   })
 );
-app.use(express.static('public'));
+app.use(express.static("public"));
+app.use(express.json());
 
 const db = new PrismaClient();
 
@@ -207,18 +218,18 @@ app.get("/kuka/:id/torles", async (req, res) => {
 
 app.post("/uj-kuka", async (req, res) => {
   if (!req.session.adminId) {
-    return res.redirect("/adminbejelentkezes");
+    //return res.json({ error: "Nincs jogosultság" });
   }
   const { location_x, location_y } = req.body;
+  console.log(req.body);
   const newKuka = await db.kuka.create({
     data: {
-      location_x,
-      location_y,
+      location_x: location_x.toString(),
+      location_y: location_y.toString(),
       allapot: 0,
-      legutobbi_urites: null,
     },
   });
-  res.redirect("/map");
+  res.json(newKuka);
 });
 
 app.get("/map", async (req, res) => {
@@ -230,7 +241,6 @@ app.get("/kilepes", (req, res) => {
   req.session.adminId = null;
   res.redirect("/");
 });
-
 
 app.listen(port, () => {
   console.log("A szerver elindult.");
