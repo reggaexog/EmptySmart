@@ -16,6 +16,7 @@ app.use(
     saveUninitialized: false, // don't create session until something stored
   })
 );
+app.use(express.static('public'));
 
 const db = new PrismaClient();
 

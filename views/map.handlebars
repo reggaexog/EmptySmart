@@ -8,14 +8,30 @@
 </header>
 
 <main>
-  <div class="map-container">
-    <iframe
-      src="https://www.google.com/maps/embed/v1/search?key=AIzaSyBO592u3e9wZQesT0TEum81xA5f60jek7A&q=near+98033"
-      width="100%"
-      height="450"
-      style="border:0;"
-      allowfullscreen=""
-      loading="lazy"
-    ></iframe>
+  <div class="map-container" id="map">
   </div>
+  <script>
+    let map;
+
+    async function initMap() {
+      const { Map } = await google.maps.importLibrary("maps");
+      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+      map = new Map(document.getElementById("map"), {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 8,
+        mapId: "ed05c72e4ce17fc1"
+      });
+      google.maps.event.addListener(map, 'click', function (event) {
+        placeMarker(event.latLng);
+      });
+
+      function placeMarker(location) {
+        var marker = new AdvancedMarkerElement({
+          position: location,
+          map: map,
+          title: "Click to zoom",
+        });
+      }
+    }
+  </script>
 </main>

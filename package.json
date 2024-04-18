@@ -18,5 +18,8 @@
     "express.js": "^1.0.0",
     "nodemon": "^3.1.0",
     "prisma": "^5.12.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
   }
 }
