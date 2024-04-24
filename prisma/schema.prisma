@@ -19,25 +19,25 @@ model Kukas {
 model Kuka {
   id               Int           @id @default(autoincrement())
   allapot          Int?
-  legutobbi_urites DateTime?
+  legutobbi_urites DateTime
   location_x       String?
   location_y       String?
-  jelzesek         Jelzesek?     @relation(name: "KukaToJelzesek")
+  jelzesek         Jelzesek[]
   kukauritesek     KukaUritesek? @relation(name: "KukaToKukaUritesek")
 }
 
 model Felhasznalo {
-  id             Int       @id @default(autoincrement())
-  felhasznalonev String?   @unique
+  id             Int        @id @default(autoincrement())
+  felhasznalonev String?    @unique
   jelszo         String?
-  jelzesek       Jelzesek? @relation(name: "FelhasznaloToJelzesek")
+  jelzesek       Jelzesek[] @relation(name: "FelhasznaloToJelzesek")
 }
 
 model Jelzesek {
   id            Int          @id @default(autoincrement())
-  kuka          Kuka?        @relation(name: "KukaToJelzesek", fields: [kukaId], references: [id])
+  Kuka          Kuka?        @relation(fields: [kukaId], references: [id])
   kukaId        Int?         @unique
-  jelzes_datum  DateTime?
+  jelzes_datum  DateTime
   felhasznalo   Felhasznalo? @relation(name: "FelhasznaloToJelzesek", fields: [felhasznaloId], references: [id])
   felhasznaloId Int?         @unique
 }

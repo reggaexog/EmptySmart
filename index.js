@@ -2,6 +2,7 @@ const express = require("express");
 const { engine } = require("express-handlebars");
 const { PrismaClient } = require("@prisma/client");
 const session = require("express-session");
+const { Prisma } = require("@prisma/client");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,7 +12,9 @@ app.engine(
     extname: ".hbs",
     helpers: {
       json: function (context) {
-        return JSON.stringify(context);
+        return JSON.stringify(context, (key, value) =>
+          typeof value === "bigint" ? value.toString() : value
+        );
       },
       HOST: function () {
         return process.env.HOST || "http://localhost:3000";
@@ -138,36 +141,18 @@ app.get("/adminmap", async (req, res) => {
     return res.redirect("/adminbejelentkezes");
   }
 
-  const kukak = await db.kuka.findMany();
+  const kukak =
+    await db.$queryRaw`SELECT k.*, COUNT(j.id) AS jelzesek_count FROM Kuka k LEFT JOIN Jelzesek j ON j.kukaId = k.id AND j.jelzes_datum > k.legutobbi_urites GROUP BY k.id;`;
   res.render("adminmap", {
     kukak,
   });
 });
-
-app.get("/kuka/:id/urites", async (req, res) => {
-  if (!req.session.adminId) {
-    return res.redirect("/adminbejelentkezes");
-  }
-  const { id } = req.params;
-  const kuka = await db.kuka.findUnique({
-    where: {
-      id: parseInt(id),
-    },
-  });
-  res.render("urites", { kuka });
-});
-
 app.post("/kuka/:id/urites", async (req, res) => {
   if (!req.session.adminId) {
-    return res.redirect("/adminbejelentkezes");
+    return res.json({ error: "Nincs jogosultság" });
   }
   const { id } = req.params;
-  const kuka = await db.kuka.findUnique({
-    where: {
-      id: parseInt(id),
-    },
-  });
-  await db.kuka.update({
+  const kuka = await db.kuka.update({
     where: {
       id: parseInt(id),
     },
@@ -176,7 +161,9 @@ app.post("/kuka/:id/urites", async (req, res) => {
       legutobbi_urites: new Date(),
     },
   });
-  res.redirect("/map");
+  res.json({
+    success: true,
+  });
 });
 
 app.get("/kuka/:id/szerkesztes", async (req, res) => {
@@ -210,9 +197,9 @@ app.post("/kuka/:id/szerkesztes", async (req, res) => {
   res.json({ success: true });
 });
 
-app.get("/kuka/:id/torles", async (req, res) => {
+app.post("/kuka/:id/torles", async (req, res) => {
   if (!req.session.adminId) {
-    return res.redirect("/adminbejelentkezes");
+    return res.json({ error: "Nincs jogosultság" });
   }
   const { id } = req.params;
   await db.kuka.delete({
@@ -220,7 +207,37 @@ app.get("/kuka/:id/torles", async (req, res) => {
       id: parseInt(id),
     },
   });
-  res.redirect("/map");
+  res.json({ success: true });
+});
+app.get("/kuka/del", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.json({ error: "Nincs jogosultság" });
+  }
+  await db.kuka.deleteMany();
+});
+app.get("/kuka/seed", async (req, res) => {
+  if (!req.session.adminId) {
+    return res.json({ error: "Nincs jogosultság" });
+  }
+  function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  for (let index = 0; index < 500; index++) {
+    const lat = getRandomArbitrary(47.680064876272574, 47.69335866460795);
+    const lng = getRandomArbitrary(16.558594085149714, 16.620312920669303);
+
+    await db.kuka.create({
+      data: {
+        location_x: lat.toString(),
+        location_y: lng.toString(),
+        legutobbi_urites: new Date(0),
+        allapot: Math.random() * 100,
+      },
+    });
+  }
+
+  res.json({ success: true });
 });
 
 app.post("/uj-kuka", async (req, res) => {
@@ -233,6 +250,7 @@ app.post("/uj-kuka", async (req, res) => {
     data: {
       location_x: location_x.toString(),
       location_y: location_y.toString(),
+      legutobbi_urites: new Date(0),
       allapot: 0,
     },
   });
@@ -252,3 +270,6 @@ app.get("/kilepes", (req, res) => {
 app.listen(port, () => {
   console.log("A szerver elindult.");
 });
+
+
+module.exports = app;

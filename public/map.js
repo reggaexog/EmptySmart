@@ -42,7 +42,6 @@ async function initMap(kukak) {
   });
 
   kukak.forEach((kuka) => {
-    console.log(kuka, parseFloat(kuka.location_x), parseFloat(kuka.location_y));
     createMarker(
       new LatLngAltitude({
         lat: parseFloat(kuka.location_x),
@@ -53,17 +52,18 @@ async function initMap(kukak) {
     );
   });
 }
-
-function getIcon(kuka) {
-  const div = document.createElement("div");
-  div.classList.add("trash");
-  const color = colorGradient(
+function getColor(kuka) {
+  return colorGradient(
     kuka.allapot / 100.0,
     { red: 0, green: 255, blue: 0 },
     { red: 255, green: 255, blue: 0 },
     { red: 255, green: 0, blue: 0 }
   );
-  console.log(color);
+}
+function getIcon(kuka) {
+  const div = document.createElement("div");
+  div.classList.add("trash");
+  const color = getColor(kuka);
   div.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="${color}" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com/ License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>`;
   return div;
 }
@@ -87,7 +87,6 @@ async function placeMarker(location) {
       } else {
         createMarker(location, getIcon(data), data);
       }
-      console.log("Success:", data);
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -105,6 +104,30 @@ async function createMarker(position, content, data) {
     gmpDraggable: editMode,
   });
   marker.addListener("click", () => {
+    if (editMode) {
+      document.getElementById("edit-kuka-id").innerHTML = data.id;
+      document
+        .getElementById("kuka-urites-btn")
+        .setAttribute("data-id", data.id);
+      document
+        .getElementById("kuka-torles-btn")
+        .setAttribute("data-id", data.id);
+      document.getElementById("edit-kuka-progress-text").innerHTML =
+        data.allapot + "%";
+      document.getElementById("edit-kuka-jelzesek").innerHTML =
+        data.jelzesek_count;
+      document.getElementById("edit-kuka-progress").style.width =
+        data.allapot + "%";
+      document.getElementById("edit-kuka-progress").style.backgroundColor =
+        getColor(data);
+      const date = new Date(data.legutobbi_urites);
+      document.getElementById("edit-kuka-urites").innerHTML =
+        date.getTime() !== 0
+          ? date.toLocaleString("hu-HU")
+          : "Nem volt még ürítés";
+      const bsOffcanvas = new bootstrap.Offcanvas("#edit-kuka");
+      bsOffcanvas.show();
+    }
     //toggleHighlight(AdvancedMarkerElement, property);
   });
   let startPosition;
@@ -112,6 +135,10 @@ async function createMarker(position, content, data) {
     startPosition = event.latLng;
   });
   marker.addListener("dragend", (event) => {
+    const confirmState = confirm("Biztosan módozítja a kukát?");
+    if (!confirmState) {
+      return (marker.position = startPosition);
+    }
     const { lat, lng } = event.latLng.toJSON();
     const modal = document.getElementById("loading");
     const timer = setTimeout(() => {
@@ -143,4 +170,59 @@ async function createMarker(position, content, data) {
         clearTimeout(timer);
       });
   });
+}
+
+function kukaUrites() {
+  if (!confirm("Biztosan üríti a kukát?")) return;
+  const id = document.getElementById("kuka-urites-btn").getAttribute("data-id");
+  const modal = document.getElementById("loading");
+  const timer = setTimeout(() => {
+    modal.showModal();
+  }, 500);
+  fetch(`${HOST}/kuka/${id}/urites`, {
+    method: "POST",
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        window.location.reload();
+        return;
+      }
+      alert("Hiba történt az ürítés során");
+    })
+    .catch((error) => {
+      alert("Hiba történt az ürítés során");
+      console.error("Error:", error);
+    })
+    .finally(() => {
+      modal.close();
+      clearTimeout(timer);
+    });
+}
+function kukaTorles() {
+  if (!confirm("Biztosan törli a kukát?")) return;
+  const id = document.getElementById("kuka-torles-btn").getAttribute("data-id");
+  const modal = document.getElementById("loading");
+  const timer = setTimeout(() => {
+    modal.showModal();
+  }, 500);
+  fetch(`${HOST}/kuka/${id}/torles`, {
+    method: "POST",
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        window.location.reload();
+        return;
+      }
+      alert("Hiba történt a törlés során");
+    })
+    .catch((error) => {
+      alert("Hiba történt a törlés során");
+      console.error("Error:", error);
+    })
+    .finally(() => {
+      modal.close();
+      clearTimeout(timer);
+    });
 }

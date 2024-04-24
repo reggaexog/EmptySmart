@@ -7,6 +7,36 @@
   </nav>
 </header>
 
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="edit-kuka" aria-labelledby="offcanvasExampleLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasExampleLabel">Kuka: <span id="edit-kuka-id"></span></h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div>
+      Kuka telitettsége(<span id="edit-kuka-progress-text"></span>):
+    </div>
+    <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="100" aria-valuemin="0"
+      aria-valuemax="100">
+      <div class="progress-bar" style="width: 100%" id="edit-kuka-progress"></div>
+    </div>
+    <div>
+      Legutóbbi űrítés: <span id="edit-kuka-urites"></span>
+    </div>
+    <button class="btn btn-warning" type="button" id="kuka-urites-btn" onclick="kukaUrites()">
+      Ürítés
+    </button>
+    <div>
+      Jelzések száma: <span id="edit-kuka-jelzesek"></span>
+    </div>
+    <button class="btn btn-danger" type="button" id="kuka-torles-btn" onclick="kukaTorles()">
+      Törlés
+    </button>
+  </div>
+</div>
+
+
 <main>
   <style>
     .trash {
@@ -35,25 +65,15 @@
   <script>
     var kukak = {{{ json kukak }}};
     editMode = true;
-    console.log(initMap);
     async function init() {
       await initMap(kukak);
       const { Map } = await google.maps.importLibrary("maps");
-      console.log("Map", map);
       google.maps.event.addListener(map, "click", async function (event) {
-        console.log("click", event);
         const confirmState = confirm("Biztosan hozzáadja a kukát?");
         if (!confirmState) {
           return;
         }
         await placeMarker(event.latLng);
-      });
-      google.maps.event.addListener(map, "dragend", async function (event) {
-        {{!-- const confirmState = confirm("Biztosan módozítja a kukát?");
-        if (!confirmState) {
-          return;
-        } --}}
-        //await placeMarker(event.latLng);
       });
     }
 
