@@ -13,6 +13,9 @@ app.engine(
       json: function (context) {
         return JSON.stringify(context);
       },
+      HOST: function () {
+        return process.env.HOST || "http://localhost:3000";
+      },
     },
   })
 );
@@ -130,11 +133,15 @@ app.get("/adminbejelentkezes", (req, res) => {
   res.render("adminbejelentkezes");
 });
 
-app.get("/adminmap", (req, res) => {
+app.get("/adminmap", async (req, res) => {
   if (!req.session.adminId) {
     return res.redirect("/adminbejelentkezes");
   }
-  res.render("adminmap");
+
+  const kukak = await db.kuka.findMany();
+  res.render("adminmap", {
+    kukak,
+  });
 });
 
 app.get("/kuka/:id/urites", async (req, res) => {
@@ -187,7 +194,7 @@ app.get("/kuka/:id/szerkesztes", async (req, res) => {
 
 app.post("/kuka/:id/szerkesztes", async (req, res) => {
   if (!req.session.adminId) {
-    return res.redirect("/adminbejelentkezes");
+    return res.json({ error: "Nincs jogosultság" });
   }
   const { id } = req.params;
   const { location_x, location_y } = req.body;
@@ -196,11 +203,11 @@ app.post("/kuka/:id/szerkesztes", async (req, res) => {
       id: parseInt(id),
     },
     data: {
-      location_x,
-      location_y,
+      location_x: location_x.toString(),
+      location_y: location_y.toString(),
     },
   });
-  res.redirect("/map");
+  res.json({ success: true });
 });
 
 app.get("/kuka/:id/torles", async (req, res) => {
