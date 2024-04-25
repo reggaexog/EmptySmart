@@ -152,6 +152,15 @@ app.post("/kuka/:id/urites", async (req, res) => {
     return res.json({ error: "Nincs jogosultság" });
   }
   const { id } = req.params;
+
+  await db.kukaUritesek.create({
+    data: {
+      kukaId: parseInt(id),
+      kukasId: req.session.adminId,
+      kiurites_datum: new Date(),
+    },
+  });
+
   const kuka = await db.kuka.update({
     where: {
       id: parseInt(id),
@@ -209,6 +218,29 @@ app.post("/kuka/:id/torles", async (req, res) => {
   });
   res.json({ success: true });
 });
+app.post("/kuka/:id/jelzes", async (req, res) => {
+  if (!req.session.userId) {
+    return res.json({ error: "Jelentkezz be kérlek!" });
+  }
+  const { id } = req.params;
+
+  const result =
+    await db.$queryRaw`SELECT COUNT(Jelzesek.id) AS jelzesek_count FROM Kuka LEFT JOIN Jelzesek ON Jelzesek.kukaId = Kuka.id AND Jelzesek.jelzes_datum > Kuka.legutobbi_urites AND Jelzesek.felhasznaloId = ${req.session.userId} AND Kuka.id = ${id};`;
+
+  if (result.length > 0 && result[0].jelzesek_count > 0) {
+    return res.json({ error: "Ezt a kukát már jelentetted!" });
+  }
+
+  const jelzes = await db.jelzesek.create({
+    data: {
+      felhasznaloId: req.session.userId,
+      kukaId: parseInt(id),
+      jelzes_datum: new Date(),
+    },
+  });
+
+  res.json({ success: true });
+});
 app.get("/kuka/del", async (req, res) => {
   if (!req.session.adminId) {
     return res.json({ error: "Nincs jogosultság" });
@@ -258,7 +290,8 @@ app.post("/uj-kuka", async (req, res) => {
 });
 
 app.get("/map", async (req, res) => {
-  const kukak = await db.kuka.findMany();
+  const kukak =
+    await db.$queryRaw`SELECT Kuka.*, COUNT(Jelzesek.id) AS jelzesek_count FROM Kuka LEFT JOIN Jelzesek ON Jelzesek.kukaId = Kuka.id AND Jelzesek.jelzes_datum > Kuka.legutobbi_urites GROUP BY Kuka.id;`;
   res.render("map", { kukak });
 });
 app.get("/kilepes", (req, res) => {
@@ -270,6 +303,5 @@ app.get("/kilepes", (req, res) => {
 app.listen(port, () => {
   console.log("A szerver elindult.");
 });
-
 
 module.exports = app;

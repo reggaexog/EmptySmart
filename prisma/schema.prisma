@@ -9,21 +9,21 @@ generator client {
 }
 
 model Kukas {
-  id             Int           @id @default(autoincrement())
-  felhasznalonev String?       @unique
+  id             Int            @id @default(autoincrement())
+  felhasznalonev String?        @unique
   jelszo         String?
   kiurtes_szam   Int?
-  kukauritesek   KukaUritesek? @relation(name: "KukasToKukaUritesek")
+  kukauritesek   KukaUritesek[]
 }
 
 model Kuka {
-  id               Int           @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   allapot          Int?
   legutobbi_urites DateTime
   location_x       String?
   location_y       String?
   jelzesek         Jelzesek[]
-  kukauritesek     KukaUritesek? @relation(name: "KukaToKukaUritesek")
+  kukauritesek     KukaUritesek[]
 }
 
 model Felhasznalo {
@@ -39,14 +39,14 @@ model Jelzesek {
   kukaId        Int?         @unique
   jelzes_datum  DateTime
   felhasznalo   Felhasznalo? @relation(name: "FelhasznaloToJelzesek", fields: [felhasznaloId], references: [id])
-  felhasznaloId Int?         @unique
+  felhasznaloId Int?
 }
 
 model KukaUritesek {
   id             Int       @id @default(autoincrement())
-  kukas          Kukas?    @relation(name: "KukasToKukaUritesek", fields: [kukasId], references: [id])
-  kukasId        Int?      @unique
-  kuka           Kuka?     @relation(name: "KukaToKukaUritesek", fields: [kukaId], references: [id])
-  kukaId         Int?      @unique
   kiurites_datum DateTime?
+  Kukas          Kukas?    @relation(fields: [kukasId], references: [id])
+  kukasId        Int?
+  Kuka           Kuka?     @relation(fields: [kukaId], references: [id])
+  kukaId         Int?
 }

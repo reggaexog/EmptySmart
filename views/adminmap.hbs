@@ -1,9 +1,9 @@
-<header class="position-absolute d-none" style="z-index: 20;">
+<header class="position-absolute" style="z-index: 20; top: 50px;">
   <nav>
-    <ul>
-      <li><a href="login.html">Profilváltás</a></li>
-      <li><a href="#">Beállítások</a></li>
-    </ul>
+    <a href="/" class="back-icon" style="background-color: #46464669; border-radius:10px; padding: 10px;">
+      <img src="/back-icon.png" class="back-icong-img" alt="Back" />
+      Vissza a főoldalra
+    </a>
   </nav>
 </header>
 
@@ -46,17 +46,44 @@
       display: flex;
       font-size: 14px;
       gap: 15px;
-      height: 30px;
+      height: 40px;
       justify-content: center;
       padding: 4px;
       position: relative;
       position: relative;
       transition: all 0.3s ease-out;
-      width: 30px;
+      width: 40px;
+      box-shadow: inset 0 0 0.75rem 0.4rem #000000;
+      filter: drop-shadow(0 0 0.75rem var(--shadow-color));
+      padding: 10px;
     }
 
     .trash:hover {
-      scale: 2;
+      scale: 1.5;
+      filter: drop-shadow(0 0 1rem var(--shadow-color));
+    }
+
+    .offcanvas {
+      background: transparent;
+      opacity: 1;
+      background-color: rgba(128, 128, 128, 0.5);
+      background: linear-gradient(to bottom, rgba(52, 52, 52, 0.5), rgba(0, 0, 0, 0.5));
+      color: white;
+      font-weight: bold;
+    }
+
+    .offcanvas-body button {
+      width: 100%;
+    }
+
+    .btn-close {
+      background-color: white;
+      opacity: 1;
+      -webkit-mask-image: var(--bs-btn-close-bg);
+      mask-image: var(--bs-btn-close-bg);
+      background-image: none;
+      width: 0.4rem;
+      height: 0.4rem;
     }
   </style>
   <div class="map-container" id="map">

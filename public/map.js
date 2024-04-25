@@ -1,5 +1,6 @@
 var map;
 var editMode = false;
+var userMode = false;
 function colorGradient(fadeFraction, rgbColor1, rgbColor2, rgbColor3) {
   var color1 = rgbColor1;
   var color2 = rgbColor2;
@@ -63,6 +64,7 @@ function getColor(kuka) {
 function getIcon(kuka) {
   const div = document.createElement("div");
   div.classList.add("trash");
+  div.style.setProperty("--shadow-color", getColor(kuka));
   const color = getColor(kuka);
   div.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="${color}" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com/ License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>`;
   return div;
@@ -128,18 +130,39 @@ async function createMarker(position, content, data) {
       const bsOffcanvas = new bootstrap.Offcanvas("#edit-kuka");
       bsOffcanvas.show();
     }
-    //toggleHighlight(AdvancedMarkerElement, property);
+    if (userMode) {
+      document.getElementById("details-kuka-id").innerHTML = data.id;
+      document
+        .getElementById("kuka-jelzes-btn")
+        .setAttribute("data-id", data.id);
+      document.getElementById("details-kuka-progress-text").innerHTML =
+        data.allapot + "%";
+      document.getElementById("details-kuka-jelzesek").innerHTML =
+        data.jelzesek_count;
+      document.getElementById("details-kuka-progress").style.width =
+        data.allapot + "%";
+      document.getElementById("details-kuka-progress").style.backgroundColor =
+        getColor(data);
+      const date = new Date(data.legutobbi_urites);
+      document.getElementById("details-kuka-urites").innerHTML =
+        date.getTime() !== 0
+          ? date.toLocaleString("hu-HU")
+          : "Nem volt még ürítés";
+      const bsOffcanvas = new bootstrap.Offcanvas("#details-kuka");
+      bsOffcanvas.show();
+    }
   });
   let startPosition;
   marker.addListener("dragstart", (event) => {
     startPosition = event.latLng;
   });
   marker.addListener("dragend", (event) => {
-    const confirmState = confirm("Biztosan módozítja a kukát?");
+    const { lat, lng } = event.latLng.toJSON();
+    if (lat == startPosition.lat() && lng == startPosition.lng()) return;
+    const confirmState = confirm("Biztosan modozítja a kukát?");
     if (!confirmState) {
       return (marker.position = startPosition);
     }
-    const { lat, lng } = event.latLng.toJSON();
     const modal = document.getElementById("loading");
     const timer = setTimeout(() => {
       modal.showModal();
@@ -219,6 +242,35 @@ function kukaTorles() {
     })
     .catch((error) => {
       alert("Hiba történt a törlés során");
+      console.error("Error:", error);
+    })
+    .finally(() => {
+      modal.close();
+      clearTimeout(timer);
+    });
+}
+
+function kukaJelzes() {
+  if (!confirm("Biztosan szeretnéd jelezni?")) return;
+  const id = document.getElementById("kuka-jelzes-btn").getAttribute("data-id");
+  const modal = document.getElementById("loading");
+  const timer = setTimeout(() => {
+    modal.showModal();
+  }, 500);
+  fetch(`${HOST}/kuka/${id}/jelzes`, {
+    method: "POST",
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        alert("Sikeresen leadtad a drótot!");
+        window.location.reload();
+        return;
+      }
+      alert(data.error);
+    })
+    .catch((error) => {
+      alert("Hiba történt a jelezés során");
       console.error("Error:", error);
     })
     .finally(() => {
